@@ -1,0 +1,10 @@
+<environment>
+  <use name=boost>
+
+  <library file="SecondaryProducer.cc" name=SecondaryProducer>
+   <flags SEAL_PLUGIN_NAME="SecondaryProducer">
+   <use name=FWCore/Integration>
+   <use name=FWCore/Framework>
+  </library>
+</environment>
+
