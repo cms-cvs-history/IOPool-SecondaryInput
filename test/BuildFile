@@ -8,7 +8,7 @@
 
   <library file="SecondaryProducer.cc" name=SecondaryProducer>
    <flags SEAL_PLUGIN_NAME="SecondaryProducer">
-   <use name=FWCore/Integration>
+   <use name=DataFormats/TestObjects>
    <use name=FWCore/Framework>
   </library>
 </environment>
