@@ -12,6 +12,8 @@
 #include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Sources/interface/VectorInputSource.h"
 
+#include "boost/shared_ptr.hpp"
+
 namespace edm {
   class SecondaryProducer: public EDProducer {
   public:

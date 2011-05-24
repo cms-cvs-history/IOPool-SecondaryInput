@@ -16,7 +16,25 @@
 #include "FWCore/Sources/interface/VectorInputSourceFactory.h"
 #include "FWCore/Utilities/interface/TypeID.h"
 
+#include <memory>
+
 namespace edm {
+
+  namespace {
+    class Helper {
+    public:
+      Helper() : bh_(), en_() {}
+      void operator()(EventPrincipal const&);
+      BasicHandle bh_;
+      EventNumber_t en_;
+    };
+    void
+    Helper::operator()(EventPrincipal const& ep) {
+      typedef edmtest::ThingCollection TC;
+      en_ = ep.id().event();
+      bh_ = ep.getByType(TypeID(typeid(TC)));
+    }
+  }
 
   // Constructor
   // make secondary input source
@@ -40,27 +58,20 @@ namespace edm {
     typedef edmtest::ThingCollection TC;
     typedef Wrapper<TC> WTC;
 
-    VectorInputSource::EventPrincipalVector result;
-    unsigned int fileSequenceNumber;
+    Helper helper;
 
     if(sequential_) {
-      secInput_->readManySequential(1, result, fileSequenceNumber);
-      if(result.empty()) {
-        secInput_->rewind();
-        secInput_->readManySequential(1, result, fileSequenceNumber);
-      }
+      secInput_->loopSequential(1, helper);
     } else if(specified_) {
-      std::vector<EventID> events;
       // Just for simplicity, we use the event ID from the primary to read the secondary.
-      events.push_back(e.id());
-      secInput_->readManySpecified(events, result);
+      std::vector<EventID> events(1, e.id());
+      secInput_->loopSpecified(events, helper);
     } else {
-      secInput_->readManyRandom(1, result, fileSequenceNumber);
+      secInput_->loopRandom(1, helper);
     }
 
-    EventPrincipal *p = &**result.begin();
-    EventNumber_t en = p->id().event();
-    BasicHandle bh = p->getByType(TypeID(typeid(TC)));
+    EventNumber_t en = helper.en_;
+    BasicHandle bh = helper.bh_;
     assert(bh.isValid());
     if(!(bh.interface()->dynamicTypeInfo() == typeid(TC))) {
       handleimpl::throwConvertTypeError(typeid(TC), bh.interface()->dynamicTypeInfo());
