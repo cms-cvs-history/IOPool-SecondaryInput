@@ -24,9 +24,10 @@ namespace edm {
     /**Default destructor*/
     virtual ~SecondaryProducer();
 
-    /**Cumulates the pileup events onto this event*/
+    /**Accumulates the pileup events into this event*/
     virtual void produce(Event& e1, EventSetup const& c);
 
+    void processOneEvent(EventPrincipal const& eventPrincipal);
 
   private:
 
@@ -47,6 +48,8 @@ namespace edm {
     bool firstLoop_;
 
     EventNumber_t expectedEventNumber_;
+
+    mutable Event* event_;
   };
 }//edm
 
