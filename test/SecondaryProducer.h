@@ -27,7 +27,7 @@ namespace edm {
     /**Accumulates the pileup events into this event*/
     virtual void produce(Event& e1, EventSetup const& c);
 
-    void processOneEvent(EventPrincipal const& eventPrincipal);
+    void processOneEvent(EventPrincipal const& eventPrincipal, Event& e);
 
   private:
 
@@ -48,8 +48,6 @@ namespace edm {
     bool firstLoop_;
 
     EventNumber_t expectedEventNumber_;
-
-    mutable Event* event_;
   };
 }//edm
 

@@ -40,20 +40,18 @@ namespace edm {
 
   // Functions that get called by framework every event
   void SecondaryProducer::produce(Event& e, EventSetup const&) {
-    event_ = &e;
     if(sequential_) {
-      secInput_->loopSequential(1, boost::bind(&SecondaryProducer::processOneEvent, this, _1));
+      secInput_->loopSequential(1, boost::bind(&SecondaryProducer::processOneEvent, this, _1, boost::ref(e)));
     } else if(specified_) {
       // Just for simplicity, we use the event ID from the primary to read the secondary.
       std::vector<EventID> events(1, e.id());
-      secInput_->loopSpecified(events, boost::bind(&SecondaryProducer::processOneEvent, this, _1));
+      secInput_->loopSpecified(events, boost::bind(&SecondaryProducer::processOneEvent, this, _1, boost::ref(e)));
     } else {
-      secInput_->loopRandom(1, boost::bind(&SecondaryProducer::processOneEvent, this, _1));
+      secInput_->loopRandom(1, boost::bind(&SecondaryProducer::processOneEvent, this, _1, boost::ref(e)));
     }
-    event_ = 0;
   }
 
-  void SecondaryProducer::processOneEvent(EventPrincipal const& eventPrincipal) {
+  void SecondaryProducer::processOneEvent(EventPrincipal const& eventPrincipal, Event& e) {
     typedef edmtest::ThingCollection TC;
     typedef Wrapper<TC> WTC;
 
@@ -70,7 +68,7 @@ namespace edm {
     std::auto_ptr<TC> thing(new TC(*tp));
 
     // Put output into event
-    event_->put(thing);
+    e.put(thing);
 
     if(!sequential_ && !specified_ && firstLoop_ && en == 1) {
       expectedEventNumber_ = 1;
