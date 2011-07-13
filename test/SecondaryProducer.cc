@@ -15,6 +15,10 @@
 #include "DataFormats/TestObjects/interface/OtherThingCollection.h"
 #include "DataFormats/TestObjects/interface/ThingCollection.h"
 
+#include "boost/bind.hpp"
+
+#include <memory>
+
 namespace edm {
 
   // Constructor
@@ -36,31 +40,23 @@ namespace edm {
 
   // Functions that get called by framework every event
   void SecondaryProducer::produce(Event& e, EventSetup const&) {
+    if(sequential_) {
+      secInput_->loopSequential(1, boost::bind(&SecondaryProducer::processOneEvent, this, _1, boost::ref(e)));
+    } else if(specified_) {
+      // Just for simplicity, we use the event ID from the primary to read the secondary.
+      std::vector<EventID> events(1, e.id());
+      secInput_->loopSpecified(events, boost::bind(&SecondaryProducer::processOneEvent, this, _1, boost::ref(e)));
+    } else {
+      secInput_->loopRandom(1, boost::bind(&SecondaryProducer::processOneEvent, this, _1, boost::ref(e)));
+    }
+  }
 
+  void SecondaryProducer::processOneEvent(EventPrincipal const& eventPrincipal, Event& e) {
     typedef edmtest::ThingCollection TC;
     typedef Wrapper<TC> WTC;
-
-    VectorInputSource::EventPrincipalVector result;
-    unsigned int fileSequenceNumber;
-
-    if (sequential_) {
-      secInput_->readManySequential(1, result, fileSequenceNumber);
-      if (result.empty()) {
-        secInput_->rewind();
-        secInput_->readManySequential(1, result, fileSequenceNumber);
-      }
-    } else if (specified_) {
-      std::vector<EventID> events;
-      // Just for simplicity, we use the event ID from the primary to read the secondary.
-      events.push_back(e.id());
-      secInput_->readManySpecified(events, result);
-    } else {
-      secInput_->readManyRandom(1, result, fileSequenceNumber);
-    }
-
-    EventPrincipal *p = &**result.begin();
-    EventNumber_t en = p->id().event();
-    EDProduct const* ep = p->getByType(TypeID(typeid(TC))).wrapper();
+    EventNumber_t en = eventPrincipal.id().event();
+    BasicHandle bh = eventPrincipal.getByType(TypeID(typeid(TC)));
+    EDProduct const* ep = eventPrincipal.getByType(TypeID(typeid(TC))).wrapper();
     assert(ep);
     WTC const* wtp = dynamic_cast<WTC const*>(ep);
     assert(wtp);
